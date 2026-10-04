@@ -1,26 +1,936 @@
-@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* ========================================
+   1. ROOT THEME
+======================================== */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  font-family: 'DM Sans', Arial, sans-serif;
+  background: #080d16;
+  color: #f7f9fc;
+
+  --cyan: #00d4e8;
+  --cyan-soft: rgba(0, 212, 232, 0.12);
+  --muted: #a3adb9;
+  --muted-light: #c6d0da;
+
+  --glass-bg: rgba(16, 25, 39, 0.70);
+  --glass-surface: rgba(255, 255, 255, 0.045);
+  --glass-surface-hover: rgba(255, 255, 255, 0.085);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+
+  --radius: 14px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(
+      ellipse at 12% 12%,
+      rgba(0, 212, 232, 0.14),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 88% 78%,
+      rgba(76, 92, 255, 0.14),
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      #080d16 0%,
+      #101827 52%,
+      #080d16 100%
+    );
+  background-attachment: fixed;
+  color: #f7f9fc;
+  font-family: 'DM Sans', Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+/* ========================================
+   2. MAIN GLASS EDITOR
+======================================== */
+
+.editor {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 680px;
+  height: 100dvh;
+  min-height: 0;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ========================================
+   3. HEADER
+======================================== */
+
+.editor-header {
+  position: relative;
+  z-index: 2;
+
+  height: 56px;
+  flex: 0 0 56px;
+
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 16px;
+
+  background: rgba(255, 255, 255, 0.035);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.editor-header .back {
+  font-size: 31px;
+  font-weight: 300;
+  line-height: 1;
+  text-align: left;
+  color: #e8edf2;
+}
+
+.editor-header h1 {
+  min-width: 0;
+  margin: 0;
+
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.editor-header .header-save {
+  justify-self: end;
+  min-width: 58px;
+
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #00d4e8, #40e6ef);
+  color: #061116;
+
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+
+  box-shadow:
+    0 4px 18px rgba(0, 212, 232, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.editor-header .header-save:hover {
+  filter: brightness(1.08);
+}
+
+/* ========================================
+   4. PHOTO PREVIEW
+======================================== */
+
+.preview {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 180px;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+  padding: 10px 12px;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255, 255, 255, 0.035),
+      transparent 70%
+    ),
+    rgba(3, 7, 14, 0.30);
+}
+
+.preview img,
+.preview canvas {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.preview .source-image {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview canvas {
+  position: relative;
+  display: block;
+}
+
+/* ========================================
+   5. PRESETS / ADJUSTMENT TABS
+======================================== */
+
+.tabs {
+  height: 52px;
+  flex: 0 0 52px;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  background: rgba(255, 255, 255, 0.035);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.tabs button {
+  position: relative;
+  color: #aab4bf;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.tabs button:hover {
+  color: #e8faff;
+}
+
+.tabs .active {
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.tabs .active::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  left: 15%;
+  right: 15%;
+  bottom: 0;
+
+  border-radius: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 212, 232, 0.3);
+}
+
+/* ========================================
+   6. EDITING PANEL
+======================================== */
+
+.panel {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 222px;
+  max-height: min(38dvh, 310px);
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+
+  padding: 16px 16px 12px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* ========================================
+   7. PRESET GRID
+======================================== */
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 12px;
+}
+
+.preset {
+  min-width: 0;
+  padding: 4px;
+
+  color: #c6d0da;
+  text-align: center;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.preset:hover {
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.preset img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.18;
+  object-fit: cover;
+
+  border-radius: 7px;
+  background: #151c26;
+}
+
+.preset span {
+  display: block;
+  min-height: 31px;
+  padding: 7px 1px 2px;
+
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.preset.selected {
+  color: #e9fdff;
+  background: rgba(0, 212, 232, 0.10);
+  border-color: rgba(0, 212, 232, 0.75);
+
+  box-shadow:
+    0 0 0 1px rgba(0, 212, 232, 0.12),
+    0 0 24px rgba(0, 212, 232, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ========================================
+   8. ADJUSTMENT CONTROLS
+======================================== */
+
+.adjustments {
+  display: grid;
+  gap: 8px;
+}
+
+.group-label {
+  margin: 0 0 1px;
+
+  color: #8996a5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.color-label {
+  margin-top: 5px;
+}
+
+.adjustment {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 43px;
+  align-items: center;
+  gap: 9px;
+
+  min-width: 0;
+  min-height: 30px;
+
+  color: #d6dfe8;
+  font-size: 12px;
+}
+
+.adjustment > span {
+  min-width: 0;
+}
+
+.adjustment output {
+  color: #b5c0cb;
+  text-align: right;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================================
+   9. RANGE SLIDERS
+======================================== */
+
+input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  margin: 0;
+
+  background: transparent;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 4px;
+
+  background: linear-gradient(
+    to right,
+    var(--cyan),
+    rgba(148, 163, 184, 0.45)
+  );
+}
+
+input[type='range']::-moz-range-track {
+  height: 3px;
+  border-radius: 4px;
+
+  background: linear-gradient(
+    to right,
+    var(--cyan),
+    rgba(148, 163, 184, 0.45)
+  );
+}
+
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+
+  border-radius: 50%;
+  background: #f1f5f8;
+
+  border: 2px solid rgba(0, 212, 232, 0.65);
+
+  box-shadow:
+    0 0 0 3px rgba(0, 212, 232, 0.10),
+    0 0 12px rgba(0, 212, 232, 0.16);
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+
+  border: 2px solid rgba(0, 212, 232, 0.65);
+  border-radius: 50%;
+  background: #f1f5f8;
+
+  box-shadow: 0 0 0 3px rgba(0, 212, 232, 0.10);
+}
+
+/* ========================================
+   10. NUMERIC INPUT BOXES
+======================================== */
+
+.adjustment .value-input {
+  width: 43px;
+  min-width: 0;
+  height: 29px;
+  padding: 3px 4px;
+
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.055);
+  color: #f0f6fc;
+
+  font-size: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.adjustment .value-input:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.adjustment .value-input:focus {
+  outline: none;
+  background: rgba(0, 212, 232, 0.07);
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(0, 212, 232, 0.10);
+}
+
+/* Remove number input arrows */
+
+.adjustment .value-input::-webkit-inner-spin-button,
+.adjustment .value-input::-webkit-outer-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.adjustment .value-input[type='number'] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* ========================================
+   11. EDITOR FOOTER
+======================================== */
+
+.editor-footer {
+  position: relative;
+  z-index: 2;
+
+  flex: 0 0 auto;
+  min-height: 66px;
+
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+
+  background: rgba(255, 255, 255, 0.035);
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.editor-footer button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.editor-footer .reset {
+  color: #d5dde5;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.editor-footer .reset:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.editor-footer .save-changes {
+  color: #061116;
+
+  border-color: rgba(255, 255, 255, 0.2);
+
+  background: linear-gradient(
+    135deg,
+    #00d4e8,
+    #40e6ef
+  );
+
+  box-shadow:
+    0 4px 18px rgba(0, 212, 232, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.editor-footer .save-changes:hover {
+  filter: brightness(1.08);
+}
+
+.spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+
+  border: 2px solid rgba(6, 105, 114, 0.65);
+  border-top-color: transparent;
+  border-radius: 50%;
+
+  animation: spin 0.7s linear infinite;
+}
+
+/* ========================================
+   12. ERROR MESSAGE
+======================================== */
+
+.error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+
+  color: #ffb3b3;
+  background: rgba(255, 75, 75, 0.07);
+  border: 1px solid rgba(255, 100, 100, 0.18);
+  border-radius: 9px;
+
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ========================================
+   13. TABLET PORTRAIT
+======================================== */
+
+@media (min-width: 681px) and (orientation: portrait) {
+  body {
+    padding: 12px;
+  }
+
+  .editor {
+    width: 100%;
+    max-width: 850px;
+    height: calc(100dvh - 24px);
+    min-height: 0;
+
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+  }
+
+  .editor-header {
+    border-radius: 18px 18px 0 0;
+  }
+
+  .preview {
+    min-height: 220px;
+    padding: 16px 24px;
+  }
+
+  .panel {
+    min-height: 220px;
+    max-height: 34dvh;
+    padding: 18px 24px;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 650px;
+    margin: auto;
+    gap: 14px;
+  }
+
+  .preset img {
+    aspect-ratio: 1.35;
+  }
+
+  .preset span {
+    font-size: 12px;
+    padding-top: 8px;
+  }
+
+  .adjustments {
+    gap: 12px;
+  }
+
+  .adjustment {
+    grid-template-columns: 100px minmax(0, 1fr) 43px;
+    gap: 14px;
+    min-height: 30px;
+    font-size: 13px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ========================================
+   14. TABLET LANDSCAPE / DESKTOP
+======================================== */
+
+@media (min-width: 900px) and (orientation: landscape) {
+  body {
+    padding: 16px;
+  }
+
+  .editor {
+    width: 100%;
+    max-width: 1150px;
+    height: min(900px, calc(100dvh - 32px));
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1.2fr)
+      minmax(320px, 0.8fr);
+
+    grid-template-rows:
+      56px
+      52px
+      minmax(0, 1fr)
+      auto;
+
+    grid-template-areas:
+      "header header"
+      "preview tabs"
+      "preview panel"
+      "preview footer";
+
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+  }
+
+  .editor-header {
+    grid-area: header;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .preview {
+    grid-area: preview;
+    min-height: 0;
+    padding: 20px;
+
+    border-right: 1px solid rgba(255, 255, 255, 0.09);
+  }
+
+  .tabs {
+    grid-area: tabs;
+    border-top: 0;
+  }
+
+  .panel {
+    grid-area: panel;
+    min-height: 0;
+    max-height: none;
+    padding: 18px;
+    overflow-y: auto;
+  }
+
+  .preset-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .preset img {
+    aspect-ratio: 1.15;
+  }
+
+  .preset span {
+    font-size: 11px;
+  }
+
+  .adjustments {
+    gap: 12px;
+  }
+
+  .adjustment {
+    grid-template-columns: 82px minmax(0, 1fr) 43px;
+    gap: 8px;
+    min-height: 30px;
+    font-size: 12px;
+  }
+
+  .editor-footer {
+    grid-area: footer;
+    padding: 12px 18px;
+    grid-template-columns: 1fr 1.5fr;
+  }
+}
+
+/* ========================================
+   15. SMALL MOBILE SCREENS
+======================================== */
+
+@media (max-width: 380px) {
+  .editor-header {
+    padding: 0 10px;
+    grid-template-columns: 36px minmax(0, 1fr) 56px;
+    gap: 5px;
+  }
+
+  .editor-header h1 {
+    font-size: 14px;
+  }
+
+  .editor-header .header-save {
+    min-width: 52px;
+    padding: 8px 10px;
+  }
+
+  .preview {
+    padding: 8px;
+  }
+
+  .panel {
+    padding: 12px 10px;
+  }
+
+  .adjustment {
+    grid-template-columns: 72px minmax(0, 1fr) 43px;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .adjustment .value-input {
+    width: 43px;
+  }
+
+  .preset-grid {
+    column-gap: 7px;
+    row-gap: 8px;
+  }
+
+  .preset span {
+    font-size: 10px;
+  }
+
+  .editor-footer {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 8px;
+  }
+
+  .editor-footer button {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+/* ========================================
+   16. SHORT SCREENS
+======================================== */
+
+@media (max-height: 720px) {
+  .editor-header {
+    height: 48px;
+    flex-basis: 48px;
+  }
+
+  .panel {
+    min-height: 170px;
+    max-height: 34dvh;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .preset-grid {
+    row-gap: 6px;
+  }
+
+  .preset img {
+    aspect-ratio: 1.35;
+  }
+
+  .adjustments {
+    gap: 5px;
+  }
+
+  .adjustment {
+    min-height: 27px;
+  }
+
+  .editor-footer {
+    padding-top: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .editor-footer button {
+    min-height: 38px;
+  }
+}
+
+/* ========================================
+   17. ACCESSIBILITY / REDUCED MOTION
+======================================== */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   18. FALLBACK FOR BROWSERS WITHOUT BLUR
+======================================== */
+
+@supports not (backdrop-filter: blur(10px)) {
+  .editor,
+  .editor-header,
+  .tabs,
+  .panel,
+  .editor-footer {
+    background: rgba(11, 16, 24, 0.96);
+  }
 }
